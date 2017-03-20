@@ -2,12 +2,12 @@ clear all;
 tic;
 
 %% 讀取每人個別資料夾
-for d = 1:1 
+for d = 9:9
     
     User_ID = num2str(d);
     
     %% 讀取Word ID(指令)
-    for word = 5:5
+    for word = 1:10
      
         if word < 10
             word = num2str(word); 
@@ -16,7 +16,7 @@ for d = 1:1
             Word_ID = num2str(word);
         end
         %% 讀取相同Word_ID圖片資料夾
-        for times = 5:5 
+        for times = 1:10
           
             if times < 10
                 times = num2str(times);
@@ -73,53 +73,48 @@ for d = 1:1
                 end
             %faceROI = imcrop(img, [left top+height/2 width height/3]);% 將人臉區域剪下
             faceROI = imcrop(img, [left top width height]);% 將人臉區域剪下
+            [Height,Width,Depth] = size(faceROI);
             imwrite(faceROI,[datadir 'face_ROI\' input_dir(n).name]);  % 將臉部區域存成檔案
             %% 找嘴巴
             mouthDetector = vision.CascadeObjectDetector('Mouth');  % 嘴唇辨識器
             mboxes = step(mouthDetector, faceROI);  % 找出嘴唇
             lipROI = insertObjectAnnotation(faceROI, 'rectangle', mboxes, 'Mouth');
             [mboxesx, mboxesy] = size(mboxes);
-            mouthleft = 0;
-            maxarea =2000;
             maxtop = 0; % 找最大的Y
             re = 0;   % 判斷是否抓取區域失敗的參數
         
-            if mboxesx ==0 % 找不到嘴巴就紀錄檔案名稱
-                lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);
+            if mboxesx ==0 
+                lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);   % 剪下最後的嘴巴區域
                 %fprintf(fid,'%s\n',input_dir(n).name);
                 %continue; % 跳下一張圖
             
             elseif mboxesx == 1
+                if  mboxes(2) < Height/3
+                        lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);
+                else
                 mouthleft = mboxes(1);
                 mouthtop = mboxes(2)-5;
                 mouthwidth = mboxes(3);
                 mouthheight = mboxes(4);
                 re = 1; % 代表抓取成功
+                lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);   % 剪下最後的嘴巴區域
+                end
             else
                     [x y] = max(mboxes(:,2));
-                    mouthleft = mboxes(y,1);
-                    mouthtop = mboxes(y,2)-5;
-                    mouthwidth = mboxes(y,3);
-                    mouthheight = mboxes(y,4) ;
-%                 for i = mboxesx+1:mboxesx*2  % 取Y欄位做為判斷標準
-%                     larea = mboxes(i + mboxesx)*mboxes(i + mboxesx*2);  % 算嘴巴區域面積
-%             
-%                     if larea>maxarea;
-%                         maxarea = larea;
-%                         mouthleft = mboxes(i - mboxesx);
-%                         mouthtop = mboxes(i) - 10;
-%                         mouthwidth = mboxes(i + mboxesx);
-%                         mouthheight = mboxes(i + mboxesx*2) ;
-%                     end
-%                 end
+                    if  x < Height/3
+                        lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);
+                    else
+                        mouthleft = mboxes(y,1);
+                        mouthtop = mboxes(y,2)-5;
+                        mouthwidth = mboxes(y,3);
+                        mouthheight = mboxes(y,4) ;
+                        lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);   % 剪下最後的嘴巴區域
+                    end
             end
 
             mouthroi = [mouthleft mouthtop mouthwidth mouthheight];
-            lipROI = imcrop(faceROI, [mouthleft mouthtop mouthwidth mouthheight]);   % 剪下最後的嘴巴區域
             lipROI = imresize(lipROI,[32 32]);
-            
             imwrite(lipROI,[datadir 'mouth_ROI\' input_dir(n).name]);  % 將嘴巴區域存成檔案
-
             end
         end
     end
