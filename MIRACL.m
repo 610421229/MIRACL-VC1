@@ -2,7 +2,7 @@ clear all;
 tic;
 
 %% 讀取每人個別資料夾
-for d = 9:9
+for d = 1:15
     
     User_ID = num2str(d);
     
